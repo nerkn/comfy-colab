@@ -1,40 +1,39 @@
 # comfy-colab
 
-Generate images and videos with ComfyUI on free Colab GPUs (Tesla T4, 15 GB VRAM).
+Generate images with **SDXL** on a free **Google Colab T4 GPU**, no local GPU needed.
 
-Pi drives Colab by running shell cells that call the scripts in this repo — no Monaco surgery, no tunnels. Each generation is one cell.
+One self-contained notebook — all logic lives in the cells, nothing external.
 
-## Quick start (in Colab)
+## Use it
 
-```bash
-# Cell 1 — one-time per session: clone + install + download a model + start server
-!git clone https://github.com/nerkn/comfy-colab.git /content/comfy-colab && \
- bash /content/comfy-colab/setup.sh sdxl && \
- python /content/comfy-colab/server.py start
+Click → opens in Colab, ready to run:
 
-# Cell 2 — per generation:
-!cd /content/comfy-colab && git pull -q && python generate.py --workflow sdxl \
- --prompt "a majestic snow leopard on a mossy rock, golden hour" --seed 42 --show
-```
+**[comfy_colab.ipynb](https://colab.research.google.com/github/nerkn/comfy-colab/blob/main/comfy_colab.ipynb)**
 
-## Layout
+1. **Runtime → Change runtime type → T4 GPU** (free tier)
+2. **Runtime → Run all**
 
-| Path | Purpose |
-|---|---|
-| `setup.sh` | Clone ComfyUI, pip install, download chosen model(s) |
-| `server.py` | Launch/stop/status the ComfyUI HTTP server (detached, survives cell exit) |
-| `generate.py` | Submit a workflow → poll → download → optionally display image |
-| `fetch.py` | Download generated outputs from the VM to inspect |
-| `workflows/*.json` | ComfyUI workflow API JSON (sdxl, flux-schnell, wan-video) |
-| `models.yaml` | Model manifest: URLs + destination paths |
+First run clones ComfyUI + downloads SDXL (~6.5 GB, ~2 min). Then it boots the
+server and generates one image. Subsequent runs in the same session are instant.
 
-## Where generated files live
+## Iterate
 
-- **Inside the VM**: `/content/ComfyUI/output/` — wiped when the runtime dies.
-- **Persisted**: anything you push to this repo's `output/` branch, or download via `fetch.py`, or upload to Google Drive (see `colab-video-gen.md`).
+Edit the **`prompt`** field in cell 3, re-run cells **3 + 4** only. Change `seed`
+for variations. The `#@param` fields (seed, width, height, steps, cfg) give a form UI.
 
-## Adding a new model
+## Cells
 
-Add an entry to `models.yaml`, add a workflow JSON to `workflows/`, then `git push`. Next Colab session: `git pull && bash setup.sh <newmodel>`.
+| # | Cell | What it does |
+|---|------|--------------|
+| 1 | Setup | Clone ComfyUI, pip install, download SDXL base |
+| 2 | Start server | Boot ComfyUI on `:8188` in the background |
+| 3 | Generate | Build workflow, POST to API, poll, save PNG |
+| 4 | Display | Show the result inline |
 
-See `colab-video-gen.md` for the full howto.
+## Notes
+
+- Output PNGs are saved to `ComfyUI/output/` on the Colab VM — **ephemeral**.
+  To keep an image, download it via the Colab file browser (sidebar → 📁) or mount
+  Google Drive and copy there.
+- The notebook is idempotent: re-running cell 1 skips already-downloaded files.
+- Server survives cell exits (launched with `start_new_session=True`).
